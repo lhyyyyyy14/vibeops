@@ -1,0 +1,23 @@
+{
+  "world": "中世纪猎巫题材，融合魔法与科技元素",
+  "style_ratio": {
+    "magic": 10,
+    "sci-fi": 90,
+    "mystery": 0,
+    "romance": 0
+  },
+  "model": "deepseek-v4-flash",
+  "api_key": "",
+  "temperature": 0.7,
+  "max_tokens": 900,
+  "request_timeout": 30,
+  "pipeline": "single_step",
+  "context": {
+    "recent_turns": 2,
+    "use_state": false
+  },
+  "judge": {
+    "enabled": false,
+    "model": null
+  }
+}
