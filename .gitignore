@@ -5,6 +5,8 @@ build/
 dist/
 data/
 logs/
+gb_internovel_runtime.log
+gb_internovel_*_request.json
 src/**/*.o
 src/*.o
 
