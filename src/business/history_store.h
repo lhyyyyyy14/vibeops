@@ -40,6 +40,8 @@ struct HistoryEdge {
   std::string choice_text;
 };
 
+// Thin SQLite boundary for all persisted story data. Scenes and StorySession
+// call this API instead of embedding SQL so schema changes stay localized.
 class HistoryStore {
 public:
   HistoryStore();
@@ -52,6 +54,7 @@ public:
   bool Ok() const;
   std::string Error() const;
 
+  // Write path used by StorySession during live play.
   std::string StartSession(const std::string &model, const std::string &world);
   bool InsertStorySetup(const std::string &session_id, const StorySetup &setup);
   bool UpdateStorySetupInitialTurn(const std::string &session_id, int turn_id);
@@ -61,6 +64,7 @@ public:
   bool UpdateTurnSelection(int turn_id, const Choice &choice);
   bool InsertEdge(const std::string &session_id, int from_turn_id, int to_turn_id, const Choice &choice);
 
+  // Read path used by HistoryScene.
   std::vector<HistorySession> ListSessions(int limit);
   std::vector<HistoryTurn> LoadTurns(const std::string &session_id);
   std::vector<HistoryEdge> LoadEdges(const std::string &session_id);

@@ -3,7 +3,7 @@
 #include "ui_draw.h"
 
 void SettingsScene::Update(float, const InputManager &input, SceneManager &scenes) {
-  if (input.IsJustPressed(Button::B) || input.IsJustPressed(Button::Menu)) {
+  if (input.IsJustPressed(Button::B)) {
     scenes.Set(AppScene::Home);
   }
 }
@@ -16,5 +16,5 @@ void SettingsScene::Render(AppContext &ctx) {
   DrawText(ctx.renderer, 72, 170, "输入映射：由 native_keymap.ini 覆盖", 2, SDL_Color{188, 198, 215, 255});
   DrawText(ctx.renderer, 72, 214, "目标设备：H700 / RG35XX 类 Linux 掌机", 2, SDL_Color{188, 198, 215, 255});
   DrawText(ctx.renderer, 72, 276, "说明：第一阶段只实现 App 空壳和场景系统", 2, SDL_Color{116, 200, 184, 255});
-  DrawFooterHint(ctx.renderer, "B / Menu 返回首页");
+  DrawFooterHint(ctx.renderer, "Esc/B 返回首页");
 }

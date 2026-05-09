@@ -10,19 +10,14 @@ void HistoryScene::OnEnter() {
 }
 
 void HistoryScene::Update(float, const InputManager &input, SceneManager &scenes) {
-  if (input.IsJustPressed(Button::Menu)) {
-    scenes.Set(AppScene::Home);
-    return;
-  }
-
   if (view_ == View::Sessions) {
-    if (input.IsJustPressed(Button::B) || input.IsJustPressed(Button::Select)) {
+    if (input.IsJustPressed(Button::B)) {
       scenes.Set(AppScene::Home);
       return;
     }
     if (input.IsJustPressed(Button::Up)) selected_session_ = ClampIndex(selected_session_ - 1, sessions_.size());
     if (input.IsJustPressed(Button::Down)) selected_session_ = ClampIndex(selected_session_ + 1, sessions_.size());
-    if ((input.IsJustPressed(Button::A) || input.IsJustPressed(Button::Start)) && !sessions_.empty()) {
+    if (input.IsJustPressed(Button::A) && !sessions_.empty()) {
       LoadSelectedSession();
       view_ = View::Turns;
     }
@@ -67,7 +62,7 @@ void HistoryScene::Render(AppContext &ctx) {
 
   if (!store_.Ok()) {
     DrawTextWrapped(ctx.renderer, 52, 96, 620, 24, "SQLite error: " + store_.Error(), 2, error);
-    DrawFooterHint(ctx.renderer, "B/Menu Back");
+    DrawFooterHint(ctx.renderer, "Esc/B Back");
     return;
   }
 
@@ -91,7 +86,7 @@ void HistoryScene::Render(AppContext &ctx) {
       DrawText(ctx.renderer, 82, y + 24, setup_line, 2, muted);
       y += 48;
     }
-    DrawFooterHint(ctx.renderer, "Up/Down Select  A Open  B/Menu Back");
+    DrawFooterHint(ctx.renderer, "上下移动  Enter/A 打开  Esc/B 返回");
     return;
   }
 
@@ -120,7 +115,7 @@ void HistoryScene::Render(AppContext &ctx) {
       DrawText(ctx.renderer, 82, y + 24, EdgeSummary(turn.id), 2, turn.error.empty() ? muted : error);
       y += 42;
     }
-    DrawFooterHint(ctx.renderer, "Up/Down Select  A Detail  B Back");
+    DrawFooterHint(ctx.renderer, "上下移动  Enter/A 详情  Esc/B 返回");
     return;
   }
 
@@ -146,7 +141,7 @@ void HistoryScene::Render(AppContext &ctx) {
   } else {
     DrawText(ctx.renderer, 56, 394, "Latency: " + std::to_string(turn.latency_ms) + " ms  prompt/raw saved", 2, muted);
   }
-  DrawFooterHint(ctx.renderer, "Up/Down Prev/Next  B Back  Menu Home");
+  DrawFooterHint(ctx.renderer, "上下切换  Esc/B 返回");
 }
 
 void HistoryScene::RefreshSessions() {

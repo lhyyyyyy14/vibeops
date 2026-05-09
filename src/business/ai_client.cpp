@@ -110,6 +110,8 @@ std::string TempPath(const std::string &suffix) {
 
 std::string ReadCommand(const std::string &command, int &exit_code) {
 #if defined(_WIN32)
+  // _popen() creates a visible cmd window for GUI apps on Windows. Use
+  // CreateProcess with an inherited pipe so API calls stay silent.
   SECURITY_ATTRIBUTES security{};
   security.nLength = sizeof(security);
   security.bInheritHandle = TRUE;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "business/story_setup.h"
 #include "scene.h"
 
 #include <array>
@@ -12,12 +13,16 @@ public:
   void Render(AppContext &ctx) override;
 
 private:
+  // Three-step flow: choose keywords, choose styles, then confirm start.
+  // The "done" rows are part of keyboard/controller navigation.
   enum class Page {
     Keywords,
     Styles,
+    Confirm,
   };
 
   void ToggleCurrent();
+  void ConfirmCurrent(SceneManager &scenes);
   StorySetup BuildSetup() const;
   int CurrentCount() const;
   int CurrentSize() const;
@@ -28,5 +33,7 @@ private:
   int selected_ = 0;
   std::array<bool, 10> keyword_selected_{};
   std::array<bool, 7> style_selected_{};
+  bool keywords_done_ = false;
+  bool styles_done_ = false;
   std::string status_;
 };

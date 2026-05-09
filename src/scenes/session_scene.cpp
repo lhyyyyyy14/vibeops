@@ -9,15 +9,18 @@ SDL_Color Rgb(Uint8 r, Uint8 g, Uint8 b) { return SDL_Color{r, g, b, 255}; }
 void SessionScene::Update(float, const InputManager &input, SceneManager &scenes) {
   if (scenes.HasPendingStorySetup()) {
     session_.StartNew(scenes.ConsumePendingStorySetup());
+    selected_choice_ = 0;
   }
-  if (input.IsJustPressed(Button::Menu) || input.IsJustPressed(Button::Select)) {
+  if (input.IsJustPressed(Button::B)) {
     scenes.Set(AppScene::Home);
     return;
   }
-  if (input.IsJustPressed(Button::A)) session_.Choose('A');
-  if (input.IsJustPressed(Button::B)) session_.Choose('B');
-  if (input.IsJustPressed(Button::X)) session_.Choose('X');
-  if (input.IsJustPressed(Button::Y)) session_.Choose('Y');
+  if (input.IsJustPressed(Button::Up)) selected_choice_ = selected_choice_ <= 0 ? 3 : selected_choice_ - 1;
+  if (input.IsJustPressed(Button::Down)) selected_choice_ = (selected_choice_ + 1) % 4;
+  if (input.IsJustPressed(Button::A)) {
+    const auto choices = session_.Choices();
+    session_.Choose(choices[static_cast<std::size_t>(selected_choice_)].label);
+  }
 }
 
 void SessionScene::Render(AppContext &ctx) {
@@ -48,13 +51,17 @@ void SessionScene::Render(AppContext &ctx) {
 
   const auto choices = session_.Choices();
   int y = 300;
+  int index = 0;
   for (const Choice &choice : choices) {
-    DrawPanel(ctx.renderer, SDL_Rect{42, y - 8, 636, 32}, Rgb(16, 23, 32), Rgb(48, 62, 82));
+    const bool is_selected = index == selected_choice_;
+    DrawPanel(ctx.renderer, SDL_Rect{42, y - 8, 636, 32}, is_selected ? Rgb(28, 45, 56) : Rgb(16, 23, 32),
+              is_selected ? accent : Rgb(48, 62, 82));
     std::string label(1, choice.label);
-    DrawText(ctx.renderer, 62, y, label, 2, accent);
+    DrawText(ctx.renderer, 62, y, is_selected ? "> " + label : "  " + label, 2, accent);
     DrawTextWrapped(ctx.renderer, 96, y, 548, 22, choice.text, 2, body);
     y += 38;
+    ++index;
   }
 
-  DrawFooterHint(ctx.renderer, "A/B/X/Y 选择分支    Select/Menu 返回");
+  DrawFooterHint(ctx.renderer, "上下选择  Enter/A 确认    Esc/B 返回");
 }

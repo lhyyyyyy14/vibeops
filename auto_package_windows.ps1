@@ -1,5 +1,6 @@
 param(
   [string]$AppsDir = "",
+  [string]$PreviewDir = "",
   [string]$MsysRoot = "C:\msys64"
 )
 
@@ -26,6 +27,10 @@ if (-not $bash) {
 
 if (-not $AppsDir) {
   $AppsDir = Join-Path $projectRoot "dist\APPS"
+}
+
+if (-not $PreviewDir) {
+  $PreviewDir = Join-Path $projectRoot "preview\GBInternovel-dev"
 }
 
 function Convert-ToMsysPath([string]$Path) {
@@ -96,4 +101,60 @@ if ($LASTEXITCODE -ne 0) {
   throw "auto package failed with exit code $LASTEXITCODE"
 }
 
+$runtimeDir = Join-Path $AppsDir "GBInternovel"
+$runtimeExe = Join-Path $runtimeDir "gb_internovel_sdl.exe"
+if (-not (Test-Path $runtimeExe)) {
+  throw "Packaged Windows executable not found: $runtimeExe"
+}
+
+if (Test-Path $PreviewDir) {
+  Remove-Item -LiteralPath $PreviewDir -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path $PreviewDir | Out-Null
+
+# The preview folder is the safe-to-share Windows build. It excludes local
+# history/log files and replaces experiment_config.json with the empty-key
+# example config below.
+$excludeNames = @("data", "gb_internovel_runtime.log", "gb_internovel_*.json")
+Get-ChildItem -LiteralPath $runtimeDir -Force | ForEach-Object {
+  $item = $_
+  $skip = $false
+  foreach ($pattern in $excludeNames) {
+    if ($item.Name -like $pattern) {
+      $skip = $true
+      break
+    }
+  }
+  if (-not $skip) {
+    Copy-Item -LiteralPath $item.FullName -Destination $PreviewDir -Recurse -Force
+  }
+}
+
+$previewConfig = Join-Path $PreviewDir "experiment_config.json"
+if (Test-Path (Join-Path $projectRoot "experiment_config.example.json")) {
+  Copy-Item -LiteralPath (Join-Path $projectRoot "experiment_config.example.json") -Destination $previewConfig -Force
+}
+
+$readme = @"
+GB Internovel - Windows development preview
+
+Run:
+  gb_internovel_sdl.exe
+
+Controls:
+  Arrow keys: move
+  Enter: confirm / A
+  Esc: cancel / B
+
+API config:
+  Edit experiment_config.json and set api_key, or set DEEPSEEK_API_KEY in the environment.
+  Do not share a package containing a private API key.
+
+Runtime data:
+  Local history is created under data\gb_internovel.db after launch.
+"@
+Set-Content -LiteralPath (Join-Path $PreviewDir "README.txt") -Value $readme -Encoding UTF8
+
 Write-Host "[gb_internovel] packaged successfully"
+Write-Host "[gb_internovel] shareable preview:"
+Write-Host "  $PreviewDir"

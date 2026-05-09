@@ -148,17 +148,8 @@ Button InputManager::KeyToButton(SDL_Keycode key) const {
   case SDLK_DOWN: return Button::Down;
   case SDLK_LEFT: return Button::Left;
   case SDLK_RIGHT: return Button::Right;
-  case SDLK_SPACE: return Button::A;
   case SDLK_RETURN: return Button::A;
-  case SDLK_z: return Button::A;
-  case SDLK_x: return Button::B;
-  case SDLK_a: return Button::X;
-  case SDLK_s: return Button::Y;
-  case SDLK_q: return Button::L1;
-  case SDLK_e: return Button::R1;
-  case SDLK_TAB: return Button::Start;
-  case SDLK_BACKSPACE: return Button::Select;
-  case SDLK_ESCAPE: return Button::Menu;
+  case SDLK_ESCAPE: return Button::B;
   default: return InvalidButton();
   }
 }

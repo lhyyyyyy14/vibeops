@@ -5,10 +5,7 @@
 void HomeScene::Update(float, const InputManager &input, SceneManager &scenes) {
   if (input.IsJustPressed(Button::Up)) selected_ = (selected_ + 2) % 3;
   if (input.IsJustPressed(Button::Down)) selected_ = (selected_ + 1) % 3;
-  if (input.IsJustPressed(Button::Menu)) {
-    scenes.Set(AppScene::Settings);
-  }
-  if (input.IsJustPressed(Button::A) || input.IsJustPressed(Button::Start)) {
+  if (input.IsJustPressed(Button::A)) {
     if (selected_ == 0) scenes.Set(AppScene::StorySetup);
     if (selected_ == 1) scenes.Set(AppScene::History);
     if (selected_ == 2) scenes.Set(AppScene::Settings);
@@ -29,5 +26,5 @@ void HomeScene::Render(AppContext &ctx) {
   DrawText(ctx.renderer, 92, 202, selected_ == 1 ? "> History Data" : "  History Data", 4,
            selected_ == 1 ? active : idle);
   DrawText(ctx.renderer, 92, 264, selected_ == 2 ? "> Settings" : "  Settings", 4, selected_ == 2 ? active : idle);
-  DrawFooterHint(ctx.renderer, "Up/Down Select  A/Start Open  Esc Settings");
+  DrawFooterHint(ctx.renderer, "上下移动  Enter/A 确认  Esc/B 取消");
 }

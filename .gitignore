@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 build/
 dist/
+preview/
 data/
 logs/
 gb_internovel_runtime.log

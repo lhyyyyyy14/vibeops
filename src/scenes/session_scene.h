@@ -10,4 +10,5 @@ public:
 
 private:
   StorySession session_{};
+  int selected_choice_ = 0;
 };
