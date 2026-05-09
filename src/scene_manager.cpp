@@ -10,3 +10,15 @@ void SceneManager::Set(AppScene scene) {
 }
 
 bool SceneManager::Is(AppScene scene) const { return current_ == scene; }
+
+void SceneManager::SetPendingStorySetup(const StorySetup &setup) {
+  pending_story_setup_ = setup;
+  has_pending_story_setup_ = true;
+}
+
+bool SceneManager::HasPendingStorySetup() const { return has_pending_story_setup_; }
+
+StorySetup SceneManager::ConsumePendingStorySetup() {
+  has_pending_story_setup_ = false;
+  return pending_story_setup_;
+}

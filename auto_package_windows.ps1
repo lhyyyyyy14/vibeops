@@ -39,6 +39,16 @@ function Convert-ToMsysPath([string]$Path) {
 
 $projectUnix = Convert-ToMsysPath $projectRoot
 $appsUnix = Convert-ToMsysPath $AppsDir
+$buildDir = Join-Path $projectRoot "build"
+$msysHomeWin = Join-Path $buildDir "msys-home"
+$tmpWin = Join-Path $buildDir "tmp"
+New-Item -ItemType Directory -Force -Path $msysHomeWin, $tmpWin | Out-Null
+$msysHomeUnix = Convert-ToMsysPath $msysHomeWin
+$tmpUnix = Convert-ToMsysPath $tmpWin
+$env:HOME = $msysHomeWin
+$env:TMPDIR = $tmpWin
+$env:TMP = $tmpWin
+$env:TEMP = $tmpWin
 
 Write-Host "[gb_internovel] MSYS2 bash: $bash"
 Write-Host "[gb_internovel] project: $projectRoot"
@@ -72,8 +82,10 @@ Write-Host "[gb_internovel] make command: $makeCmd"
 $command = @"
 set -eu
 export PATH=${profilePath}:/usr/bin:`$PATH
-export HOME='$projectUnix/build/msys-home'
-export TMPDIR='$projectUnix/build/tmp'
+export HOME='$msysHomeUnix'
+export TMPDIR='$tmpUnix'
+export TMP='$tmpWin'
+export TEMP='$tmpWin'
 mkdir -p "`$HOME" "`$TMPDIR"
 cd '$projectUnix'
 APPS_DIR='$appsUnix' MAKE_CMD='$makeCmd' sh ./auto_package.sh

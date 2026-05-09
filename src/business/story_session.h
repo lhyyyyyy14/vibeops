@@ -2,6 +2,7 @@
 
 #include "business/ai_client.h"
 #include "business/choice.h"
+#include "business/history_store.h"
 
 #include <array>
 #include <mutex>
@@ -14,6 +15,7 @@ public:
   StorySession();
   ~StorySession();
 
+  void StartNew(const StorySetup &setup);
   void EnsureStarted();
   std::string Story() const;
   std::array<Choice, 4> Choices() const;
@@ -27,6 +29,9 @@ private:
   void ApplyResult(const AiTurnResult &result, const Choice *choice);
 
   AiConfig config_{};
+  HistoryStore history_{};
+  StorySetup setup_{};
+  std::string session_id_;
   std::string story_ =
       "这里是互动小说会话页。当前只接入本地 Mock 数据，后续会接入 main.py 里的 AI 提示词框架。";
   std::array<Choice, 4> choices_{
@@ -39,7 +44,12 @@ private:
   std::string error_;
   std::vector<std::string> recent_story_;
   Choice last_choice_{};
+  Choice pending_edge_choice_{};
+  int turn_index_ = 0;
+  int current_turn_id_ = 0;
+  int pending_edge_from_turn_id_ = 0;
   bool has_last_choice_ = false;
+  bool has_pending_edge_ = false;
   bool started_ = false;
   bool loading_ = false;
   std::thread worker_;

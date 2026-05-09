@@ -1,6 +1,7 @@
 #pragma once
 
 #include "business/choice.h"
+#include "business/story_setup.h"
 
 #include <array>
 #include <string>
@@ -18,6 +19,7 @@ struct AiConfig {
 
 struct AiTurnRequest {
   std::vector<std::string> recent_story;
+  StorySetup setup;
   Choice last_choice{};
   bool has_last_choice = false;
 };
@@ -27,6 +29,9 @@ struct AiTurnResult {
   std::string error;
   std::string story;
   std::array<Choice, 4> choices{};
+  std::string prompt;
+  std::string raw_response;
+  int latency_ms = 0;
 };
 
 AiConfig LoadAiConfig(const std::string &path);

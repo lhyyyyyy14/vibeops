@@ -16,12 +16,16 @@ CORE_SRCS := \
 
 SCENE_SRCS := \
   src/scenes/boot_scene.cpp \
+  src/scenes/history_scene.cpp \
   src/scenes/home_scene.cpp \
   src/scenes/settings_scene.cpp \
-  src/scenes/session_scene.cpp
+  src/scenes/session_scene.cpp \
+  src/scenes/story_setup_scene.cpp
 
 BUSINESS_SRCS := \
   src/business/ai_client.cpp \
+  src/business/history_store.cpp \
+  src/business/story_setup.cpp \
   src/business/story_session.cpp
 
 SRCS := \
@@ -51,6 +55,14 @@ CXXFLAGS += -DHAVE_SDL2_TTF $(TTF_CFLAGS)
 LDFLAGS += $(TTF_LIBS)
 endif
 
+SQLITE_CFLAGS ?= $(shell $(PKG_CONFIG) --cflags sqlite3 2>/dev/null)
+SQLITE_LIBS ?= $(shell $(PKG_CONFIG) --libs sqlite3 2>/dev/null)
+ifeq ($(strip $(SQLITE_LIBS)),)
+SQLITE_LIBS := -lsqlite3
+endif
+CXXFLAGS += $(SQLITE_CFLAGS)
+LDFLAGS += $(SQLITE_LIBS)
+
 .PHONY: all clean run print-config
 
 all: $(TARGET)
@@ -73,6 +85,8 @@ print-config:
 	@echo "SDL_LIBS=$(SDL_LIBS)"
 	@echo "TTF_CFLAGS=$(TTF_CFLAGS)"
 	@echo "TTF_LIBS=$(TTF_LIBS)"
+	@echo "SQLITE_CFLAGS=$(SQLITE_CFLAGS)"
+	@echo "SQLITE_LIBS=$(SQLITE_LIBS)"
 	@echo "CXXFLAGS=$(CXXFLAGS)"
 	@echo "LDFLAGS=$(LDFLAGS)"
 

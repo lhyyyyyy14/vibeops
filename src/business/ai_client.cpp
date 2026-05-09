@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -12,6 +13,10 @@
 #include <vector>
 
 #if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
 #define POPEN _popen
 #define PCLOSE _pclose
 #else
@@ -104,6 +109,60 @@ std::string TempPath(const std::string &suffix) {
 }
 
 std::string ReadCommand(const std::string &command, int &exit_code) {
+#if defined(_WIN32)
+  SECURITY_ATTRIBUTES security{};
+  security.nLength = sizeof(security);
+  security.bInheritHandle = TRUE;
+
+  HANDLE read_pipe = nullptr;
+  HANDLE write_pipe = nullptr;
+  if (!CreatePipe(&read_pipe, &write_pipe, &security, 0)) {
+    exit_code = -1;
+    return "";
+  }
+  SetHandleInformation(read_pipe, HANDLE_FLAG_INHERIT, 0);
+
+  STARTUPINFOA startup{};
+  startup.cb = sizeof(startup);
+  startup.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+  startup.wShowWindow = SW_HIDE;
+  startup.hStdOutput = write_pipe;
+  startup.hStdError = write_pipe;
+  startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+  PROCESS_INFORMATION process{};
+  std::string command_line = "cmd.exe /C " + command;
+  std::vector<char> mutable_command(command_line.begin(), command_line.end());
+  mutable_command.push_back('\0');
+
+  const BOOL started =
+      CreateProcessA(nullptr, mutable_command.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr,
+                     &startup, &process);
+  CloseHandle(write_pipe);
+
+  if (!started) {
+    CloseHandle(read_pipe);
+    exit_code = -1;
+    return "";
+  }
+
+  std::array<char, 4096> buffer{};
+  std::string output;
+  DWORD bytes_read = 0;
+  while (::ReadFile(read_pipe, buffer.data(), static_cast<DWORD>(buffer.size()), &bytes_read, nullptr) &&
+         bytes_read > 0) {
+    output.append(buffer.data(), bytes_read);
+  }
+  CloseHandle(read_pipe);
+  WaitForSingleObject(process.hProcess, INFINITE);
+
+  DWORD process_exit = 0;
+  GetExitCodeProcess(process.hProcess, &process_exit);
+  CloseHandle(process.hThread);
+  CloseHandle(process.hProcess);
+  exit_code = static_cast<int>(process_exit);
+  return output;
+#else
   std::array<char, 4096> buffer{};
   std::string output;
   FILE *pipe = POPEN(command.c_str(), "r");
@@ -116,6 +175,7 @@ std::string ReadCommand(const std::string &command, int &exit_code) {
   }
   exit_code = PCLOSE(pipe);
   return output;
+#endif
 }
 
 std::string ExtractJsonStringAt(const std::string &json, std::size_t quote_pos, std::size_t *end_pos = nullptr) {
@@ -247,12 +307,15 @@ std::string BuildPrompt(const AiConfig &config, const AiTurnRequest &request) {
   std::ostringstream prompt;
   prompt << "你是互动小说的 story_options skill。一次性生成下一段故事和 4 个分支选项。\n";
   prompt << "世界观：" << config.world << "\n";
-  prompt << "风格比例：magic 10, sci-fi 90, mystery 0, romance 0\n";
+  prompt << "本局关键词：" << JoinSetupLabels(request.setup.keywords) << "\n";
+  prompt << "本局风格：" << JoinSetupLabels(request.setup.styles) << "\n";
   prompt << "最近剧情：";
   if (request.recent_story.empty()) {
     prompt << "[]";
+    prompt << "\n这是第一轮，请根据关键词和风格生成一个清晰、有钩子的开场故事。";
   } else {
     for (const std::string &story : request.recent_story) prompt << "\n- " << story;
+    prompt << "\n后续剧情必须延续本局关键词和风格，不要突然切换题材。";
   }
   prompt << "\n上一步选择：";
   if (request.has_last_choice) {
@@ -335,17 +398,22 @@ AiConfig LoadAiConfig(const std::string &path) {
 AiTurnResult GenerateStoryTurn(const AiConfig &config, const AiTurnRequest &request) {
   AiTurnResult result;
   result.choices = EmptyChoices();
+  result.prompt = BuildPrompt(config, request);
   if (config.api_key.empty()) {
     result.error = "缺少 API Key：请在 experiment_config.json、.env 或环境变量中设置";
     return result;
   }
 
   const std::string request_path = TempPath("_request.json");
-  WriteFile(request_path, BuildPayload(config, BuildPrompt(config, request)));
+  WriteFile(request_path, BuildPayload(config, result.prompt));
   int exit_code = 0;
   const std::string command = CurlCommand(config, request_path);
   AppendLog("[api] request start");
+  const auto started = std::chrono::steady_clock::now();
   const std::string response = ReadCommand(command, exit_code);
+  result.latency_ms = static_cast<int>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count());
+  result.raw_response = response;
   AppendLog("[api] exit=" + std::to_string(exit_code) + " bytes=" + std::to_string(response.size()));
   if (!response.empty()) AppendLog("[api] response=" + Preview(response));
   std::remove(request_path.c_str());
@@ -360,6 +428,10 @@ AiTurnResult GenerateStoryTurn(const AiConfig &config, const AiTurnRequest &requ
     return result;
   }
   result = ParseStoryOptions(content);
+  result.prompt = BuildPrompt(config, request);
+  result.raw_response = response;
+  result.latency_ms = static_cast<int>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count());
   if (!result.ok && result.error.empty()) result.error = "无法解析 API 返回的故事 JSON";
   return result;
 }

@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 build/
 dist/
+data/
 logs/
 src/**/*.o
 src/*.o

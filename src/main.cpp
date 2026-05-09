@@ -4,9 +4,11 @@
 #include "layout_metrics.h"
 #include "scene_manager.h"
 #include "scenes/boot_scene.h"
+#include "scenes/history_scene.h"
 #include "scenes/home_scene.h"
 #include "scenes/session_scene.h"
 #include "scenes/settings_scene.h"
+#include "scenes/story_setup_scene.h"
 #include "ui_draw.h"
 
 #include <SDL.h>
@@ -15,11 +17,13 @@
 #include <memory>
 
 namespace {
-Scene *SceneFor(AppScene scene, BootScene &boot, HomeScene &home, SettingsScene &settings,
-                SessionScene &session) {
+Scene *SceneFor(AppScene scene, BootScene &boot, HomeScene &home, StorySetupScene &story_setup, HistoryScene &history,
+                SettingsScene &settings, SessionScene &session) {
   switch (scene) {
   case AppScene::Boot: return &boot;
   case AppScene::Home: return &home;
+  case AppScene::StorySetup: return &story_setup;
+  case AppScene::History: return &history;
   case AppScene::Settings: return &settings;
   case AppScene::Session: return &session;
   }
@@ -77,9 +81,11 @@ int main(int, char **) {
   SceneManager scenes;
   BootScene boot;
   HomeScene home;
+  StorySetupScene story_setup;
+  HistoryScene history;
   SettingsScene settings;
   SessionScene session;
-  Scene *active = SceneFor(scenes.Current(), boot, home, settings, session);
+  Scene *active = SceneFor(scenes.Current(), boot, home, story_setup, history, settings, session);
   active->OnEnter();
 
   bool running = true;
@@ -97,10 +103,10 @@ int main(int, char **) {
     }
 
     const AppScene before = scenes.Current();
-    active = SceneFor(before, boot, home, settings, session);
+    active = SceneFor(before, boot, home, story_setup, history, settings, session);
     active->Update(dt, input, scenes);
     if (scenes.Current() != before) {
-      active = SceneFor(scenes.Current(), boot, home, settings, session);
+      active = SceneFor(scenes.Current(), boot, home, story_setup, history, settings, session);
       active->OnEnter();
     }
     active->Render(ctx);
