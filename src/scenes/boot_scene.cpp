@@ -12,9 +12,12 @@ void BootScene::Update(float dt, const InputManager &input, SceneManager &scenes
 }
 
 void BootScene::Render(AppContext &ctx) {
-  ClearScreen(ctx.renderer, SDL_Color{13, 16, 23, 255});
-  DrawText(ctx.renderer, 96, 130, "GB Internovel", 5, SDL_Color{232, 238, 248, 255});
-  DrawText(ctx.renderer, 132, 206, "复古掌机互动小说壳", 3, SDL_Color{116, 200, 184, 255});
-  DrawText(ctx.renderer, 132, 260, "按 回车 / 空格 / Z 进入首页", 3, SDL_Color{188, 198, 215, 255});
-  DrawFooterHint(ctx.renderer, "启动页：SDL2 + C++17 骨架");
+  DrawAppShell(ctx.renderer, "GB Internovel", "PRESS START", "READY");
+
+  DrawSectionPanel(ctx.renderer, SDL_Rect{96, 106, 528, 222}, "");
+  DrawText(ctx.renderer, 156, 152, "GB Internovel", 5, UiDark());
+  DrawText(ctx.renderer, 170, 226, "复古掌机互动小说", 3, UiAccent());
+  DrawText(ctx.renderer, 180, 282, "按 Enter / Space / Z 进入首页", 2, UiMuted());
+
+  DrawFooterButtons(ctx.renderer, {{"A", "START"}, {"B", "BACK"}, {"UP/DN", "MOVE"}});
 }

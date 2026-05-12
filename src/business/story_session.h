@@ -32,8 +32,7 @@ private:
   HistoryStore history_{};
   StorySetup setup_{};
   std::string session_id_;
-  std::string story_ =
-      "这里是互动小说会话页。当前只接入本地 Mock 数据，后续会接入 main.py 里的 AI 提示词框架。";
+  std::string story_ = "这里是互动小说会话页。请选择关键词和风格，开始生成第一段故事。";
   std::array<Choice, 4> choices_{
       Choice{'A', "调查村口线索"},
       Choice{'B', "询问机械镇长"},

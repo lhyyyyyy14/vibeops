@@ -92,7 +92,7 @@ void StorySession::StartRequest(const Choice *choice) {
       selected = *choice;
       request.last_choice = selected;
       request.has_last_choice = true;
-      last_action_ = std::string("Selected ") + selected.label + ": " + selected.text;
+      last_action_ = std::string("已选择 ") + selected.label + ": " + selected.text;
       selected_turn_id = current_turn_id_;
       if (current_turn_id_ > 0) {
         pending_edge_from_turn_id_ = current_turn_id_;
@@ -128,7 +128,7 @@ void StorySession::ApplyResult(const AiTurnResult &result, const Choice *choice)
                           result.error, result.latency_ms);
 
   if (!result.ok) {
-    error_ = result.error.empty() ? "Story generation failed." : result.error;
+    error_ = result.error.empty() ? "故事生成失败。" : result.error;
     return;
   }
   if (turn_index_ == 1 && new_turn_id > 0) history_.UpdateStorySetupInitialTurn(session_id_, new_turn_id);

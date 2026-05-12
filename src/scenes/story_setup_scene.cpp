@@ -4,10 +4,6 @@
 
 #include <algorithm>
 
-namespace {
-SDL_Color Rgb(Uint8 r, Uint8 g, Uint8 b) { return SDL_Color{r, g, b, 255}; }
-}  // namespace
-
 void StorySetupScene::OnEnter() {
   page_ = Page::Keywords;
   selected_ = 0;
@@ -15,7 +11,7 @@ void StorySetupScene::OnEnter() {
   style_selected_.fill(false);
   keywords_done_ = false;
   styles_done_ = false;
-  status_ = "第一步：选择 1-5 个关键词，然后移动到完成按钮确认。";
+  status_ = "第一步：选择 1-5 个关键词，然后确认完成。";
 }
 
 void StorySetupScene::Update(float, const InputManager &input, SceneManager &scenes) {
@@ -51,45 +47,46 @@ void StorySetupScene::Update(float, const InputManager &input, SceneManager &sce
 }
 
 void StorySetupScene::Render(AppContext &ctx) {
-  const SDL_Color bg = Rgb(13, 18, 26);
-  const SDL_Color panel = Rgb(25, 34, 46);
-  const SDL_Color border = Rgb(70, 86, 112);
-  const SDL_Color title = Rgb(238, 242, 248);
-  const SDL_Color idle = Rgb(190, 200, 216);
-  const SDL_Color muted = Rgb(142, 156, 178);
-  const SDL_Color active = Rgb(116, 200, 184);
-  const SDL_Color checked = Rgb(250, 210, 120);
+  DrawAppShell(ctx.renderer, "故事设定", "SETUP / " + CurrentTitle(), "READY");
+  DrawTabs(ctx.renderer, 48, 76, {"关键词", "风格", "确认"}, page_ == Page::Keywords ? 0 : page_ == Page::Styles ? 1 : 2);
 
-  ClearScreen(ctx.renderer, bg);
-  DrawText(ctx.renderer, 34, 24, "故事设定", 4, title);
-  DrawText(ctx.renderer, 430, 32, CurrentTitle(), 2, active);
-
-  DrawPanel(ctx.renderer, SDL_Rect{36, 76, 648, 314}, panel, border);
-  DrawText(ctx.renderer, 58, 96,
-           CurrentTitle() + "  " + std::to_string(CurrentCount()) + "/" + std::to_string(CurrentMax()), 2, active);
+  DrawSectionPanel(ctx.renderer, SDL_Rect{42, 112, 440, 294},
+                   CurrentTitle() + " " + std::to_string(CurrentCount()) + "/" + std::to_string(CurrentMax()));
+  DrawSectionPanel(ctx.renderer, SDL_Rect{506, 112, 172, 294}, "摘要");
 
   if (page_ == Page::Confirm) {
-    DrawTextWrapped(ctx.renderer, 66, 140, 590, 24, StorySetupSummary(BuildSetup()), 2, idle);
-    DrawText(ctx.renderer, 66, 252, selected_ == 0 ? "> 完成并开始" : "  完成并开始", 3, active);
+    DrawTextWrapped(ctx.renderer, 68, 164, 388, 22, StorySetupSummary(BuildSetup()), 2, UiInk(), 5);
+    DrawMenuItem(ctx.renderer, SDL_Rect{92, 314, 326, 44}, "完成并开始", "GO", selected_ == 0);
   } else {
     const auto &items = page_ == Page::Keywords ? AvailableStoryKeywords() : AvailableStoryStyles();
-    int y = 132;
+    int y = 152;
+    const int row_h = page_ == Page::Keywords ? 21 : 28;
     for (int i = 0; i < static_cast<int>(items.size()); ++i) {
       const bool is_selected = i == selected_;
       const bool is_checked = page_ == Page::Keywords ? keyword_selected_[static_cast<std::size_t>(i)]
                                                        : style_selected_[static_cast<std::size_t>(i)];
-      std::string line = std::string(is_selected ? "> " : "  ") + (is_checked ? "[x] " : "[ ] ") + items[i].label;
-      DrawText(ctx.renderer, 66, y, line, 2, is_checked ? checked : is_selected ? active : idle);
-      y += 25;
+      DrawPanel(ctx.renderer, SDL_Rect{66, y, 386, row_h - 2}, is_selected ? SDL_Color{232, 241, 255, 255} : UiPaperAlt(),
+                is_selected ? UiAccent() : UiLine());
+      DrawText(ctx.renderer, 78, y + 2, is_selected ? ">" : " ", 2, UiAccent());
+      DrawText(ctx.renderer, 104, y + 2, is_checked ? "[x]" : "[ ]", 2, is_checked ? UiGreen() : UiMuted());
+      DrawTextWrapped(ctx.renderer, 154, y + 2, 260, 18, items[i].label, 2, is_selected ? UiInk() : UiMuted(), 1);
+      y += row_h;
     }
     const bool done_selected = selected_ == static_cast<int>(items.size());
     const std::string done_label = page_ == Page::Keywords ? "完成关键词选择" : "完成风格选择";
-    DrawText(ctx.renderer, 66, 352, std::string(done_selected ? "> " : "  ") + done_label, 2,
-             done_selected ? active : muted);
+    DrawMenuItem(ctx.renderer, SDL_Rect{66, 364, 386, 28}, done_label, "NEXT", done_selected);
   }
 
-  DrawTextWrapped(ctx.renderer, 58, 400, 600, 22, status_, 2, muted);
-  DrawFooterHint(ctx.renderer, "上下移动  Enter/A 确认  左右返回/前进  Esc/B 取消");
+  DrawText(ctx.renderer, 526, 158, "步骤", 2, UiAccent());
+  DrawText(ctx.renderer, 526, 188, keywords_done_ || page_ != Page::Keywords ? "[x] 关键词" : "[ ] 关键词", 2,
+           page_ == Page::Keywords ? UiAccent() : UiMuted());
+  DrawText(ctx.renderer, 526, 218, styles_done_ || page_ == Page::Confirm ? "[x] 风格" : "[ ] 风格", 2,
+           page_ == Page::Styles ? UiAccent() : UiMuted());
+  DrawText(ctx.renderer, 526, 248, page_ == Page::Confirm ? "[x] 确认" : "[ ] 确认", 2,
+           page_ == Page::Confirm ? UiAccent() : UiMuted());
+  DrawTextWrapped(ctx.renderer, 526, 302, 128, 20, status_, 2, UiMuted(), 4);
+
+  DrawFooterButtons(ctx.renderer, {{"UP/DN", "MOVE"}, {"A", "OK"}, {"L/R", "STEP"}, {"B", "BACK"}});
 }
 
 void StorySetupScene::ConfirmCurrent(SceneManager &scenes) {
@@ -110,7 +107,7 @@ void StorySetupScene::ConfirmCurrent(SceneManager &scenes) {
       keywords_done_ = true;
       page_ = Page::Styles;
       selected_ = 0;
-      status_ = "第二步：选择 1-3 个风格，然后移动到完成按钮确认。";
+      status_ = "第二步：选择 1-3 个风格，然后确认完成。";
     } else {
       styles_done_ = true;
       page_ = Page::Confirm;

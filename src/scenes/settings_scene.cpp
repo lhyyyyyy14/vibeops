@@ -9,12 +9,19 @@ void SettingsScene::Update(float, const InputManager &input, SceneManager &scene
 }
 
 void SettingsScene::Render(AppContext &ctx) {
-  ClearScreen(ctx.renderer, SDL_Color{18, 19, 25, 255});
-  DrawText(ctx.renderer, 32, 24, "设置中心", 4, SDL_Color{235, 238, 245, 255});
-  DrawPanel(ctx.renderer, SDL_Rect{38, 96, 644, 260}, SDL_Color{30, 33, 43, 255}, SDL_Color{76, 87, 112, 255});
-  DrawText(ctx.renderer, 72, 126, "窗口模式：由 native_config.ini 控制", 2, SDL_Color{188, 198, 215, 255});
-  DrawText(ctx.renderer, 72, 170, "输入映射：由 native_keymap.ini 覆盖", 2, SDL_Color{188, 198, 215, 255});
-  DrawText(ctx.renderer, 72, 214, "目标设备：H700 / RG35XX 类 Linux 掌机", 2, SDL_Color{188, 198, 215, 255});
-  DrawText(ctx.renderer, 72, 276, "说明：第一阶段只实现 App 空壳和场景系统", 2, SDL_Color{116, 200, 184, 255});
-  DrawFooterHint(ctx.renderer, "Esc/B 返回首页");
+  DrawAppShell(ctx.renderer, "设置中心", "CONFIG", "READY");
+
+  DrawSectionPanel(ctx.renderer, SDL_Rect{58, 96, 418, 280}, "运行文件");
+  DrawMenuItem(ctx.renderer, SDL_Rect{88, 148, 338, 42}, "窗口模式", "INI", false);
+  DrawText(ctx.renderer, 118, 198, "native_config.ini", 2, UiMuted());
+  DrawMenuItem(ctx.renderer, SDL_Rect{88, 230, 338, 42}, "输入映射", "INI", false);
+  DrawText(ctx.renderer, 118, 280, "native_keymap.ini", 2, UiMuted());
+  DrawMenuItem(ctx.renderer, SDL_Rect{88, 312, 338, 42}, "API 配置", "JSON", false);
+
+  DrawSectionPanel(ctx.renderer, SDL_Rect{504, 96, 136, 280}, "设备");
+  DrawTextWrapped(ctx.renderer, 522, 142, 100, 21, "H700 / RG35XX 类 Linux 掌机", 2, UiInk(), 3);
+  DrawText(ctx.renderer, 522, 236, "720x480", 2, UiAccent());
+  DrawText(ctx.renderer, 522, 282, "SDL2", 2, UiMuted());
+
+  DrawFooterButtons(ctx.renderer, {{"B", "BACK"}});
 }
